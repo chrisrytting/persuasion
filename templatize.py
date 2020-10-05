@@ -1,43 +1,10 @@
 import pandas as pd
 import numpy as np
 import re
-
-def labels_txt_to_dic(txtfile='varlabels.txt'):
-
-    """
-    Read the varlabels.txt file, of the form
-
-    'code = "label"'
-
-    and create a dictionary where, for each item, code is the key and 
-    label is the item.
-    """
-    varlabelstxt = None
-    with open('varlabels.txt','r', encoding='Latin1') as f:
-        varlabelstxt = [vl.strip() for vl in f.readlines()]
-
-    varlabelsdic = {}
-    for vl in varlabelstxt:
-        key, val = vl.split(' = ')
-        varlabelsdic[key] = val[1:-1]
-    return varlabelsdic
+import configparser
 
 def read_in_df(txtfile='anes_timeseries_2016/anes_timeseries_2016_rawdata.txt'):
     df = pd.read_csv(txtfile, sep="|")
-    return df
-
-def label_df(df):
-    """
-    Take the raw text file and get it into a df, with descriptive names instead
-    of codes.
-
-    (In this directory, the file varlabels.txt has replacement names for the 
-    codes that, in the raw data file, index the columns. We want to replace
-    the codes with their more descriptive names)
-    """
-    labels_txt = get_labels_txt()
-    labels_dic = labels_txt_to_dic(labels_txt)
-    df.rename(labels_dic, axis = 1, inplace=True)
     return df
 
 def read_code_labels(txtfile='codelabels.txt'):
@@ -65,37 +32,6 @@ def parse_code_labels(code_labels):
     return cldic
 
 
-def generate_story(df, ix):
-    """
-    Given a dataframe and an index, generate a natural language story for a 
-    person given the data in the dataframe
-
-    TODO: Add an ability to indicate which fields you want described in that
-    story, e.g. who they voted for in the presidential election, how they 
-    feel about their own party, how they feel about the other party, how old
-    they are, etc.
-    """
-
-    label_dic = labels_txt_to_dic()
-    code_labels = read_code_labels()
-    cldic = parse_code_labels(code_labels)
-    #print(cldic)
-
-    story_list = ["name", 'vote2012'] 
-    code_dic = {
-            'name':'V161342',
-            'vote2012':'V161006',
-            }
-    story_nl = ""
-    for story in story_list:
-        code = code_dic[story]
-        answer = df.iloc[ix][code]
-        converted_answer = re.search("(?<=\d\. ).*",cldic[code][str(answer)]).group(0)
-        story_bit = f"I am a {converted_answer}."
-        story_nl += story_bit
-
-    parts_of_story = []
-
 class Template():
     """
     This class stores all the templates for all the codes and has methods
@@ -104,9 +40,10 @@ class Template():
 
 
     """
-    def __init__(self, df, alltoinclude):
+    def __init__(self, df, ivs, dv, tabsepfordv = True):
         self.df = df
 
+        self.tabsepfordv = "\t" if tabsepfordv else ""
         code_labels = read_code_labels()
         self.cldic = parse_code_labels(code_labels)
         self.customcldic = {
@@ -189,7 +126,7 @@ class Template():
                     },
                 }
 
-        #Pass in as a list "alltoinclude" those keys here which you want to 
+        #Pass in as a list "ivs" those keys here which you want to 
         #include in the story
 
         namelabeldic = {
@@ -203,19 +140,20 @@ class Template():
                 "churchgoer": "V161244",
                 "educationlevel": "V161270",
                 "race": "V161310x",
-                "salary": "V161361x"
-                "sexualorientation": "V16511"
+                "salary": "V161361x",
+                "sexualorientation": "V161511",
                 }
 
 
-        self.codestoinclude=[]
-        for toinclude in alltoinclude:
-            self.codestoinclude.append(namelabeldic[toinclude])
+        self.ivs=[]
+        for iv in ivs:
+            self.ivs.append(namelabeldic[iv])
+        self.dv = namelabeldic[dv]
 
     def fill_template(self, code, data):
         self.codetemplatedic = {
                 "V161342":f"I am a {data}.", #Gender
-                "V161006":f"In 2012, I voted for {data}.", #Pres vote in 2012
+                "V161006":f"In 2012, I voted for {self.tabsepfordv}{data}.", #Pres vote in 2012
                 "V161009":f"I watch {data} news.", #News consumption
                 "V161021":f"I {data} in the primary.", #Pres primary vote this year
                 "V161027":f"I voted for {data} in 2016.", #Pres primary vote this year
@@ -244,8 +182,8 @@ class Template():
                 "V161244": np.arange(1,3),
                 "V161270": np.arange(1,17),
                 "V161310x": np.arange(1,6),
-                "V161361x": [1,21,11,17,15,23,24,13,22,12,25,14,26,27,07,
-                    9,28,19,3]
+                "V161361x": [1,21,11,17,15,23,24,13,22,12,25,14,26,27,7,\
+                    9,28,19,3],
                 "V161511": np.arange(1,4),
                 }
         if data in acceptable[code]:
@@ -256,21 +194,29 @@ class Template():
 
         pass
 
-    def generate_story(self, ix):
+    def generate_story(self, ix, codes):
+        """
+        Generate story for respondent indexed by ix
+        """
         story = []
-        for code in self.codestoinclude:
+        for code in codes:
+#            print(code)
             data = self.df.iloc[ix][code] #This needs to get the data from the survey
+#            print(data)
             acceptable = self.check_if_valid(code, data)
+#            print(acceptable)
             if acceptable:
                 try:
                     data = self.customcldic[code][str(data)]
                 except:
                     replace_data = self.cldic[code][str(data)]
                     data = re.search("(?<=\d\. ).*",replace_data).group(0)
+#                print(data)
                 template = self.fill_template(code,data)#This needs to insert the data from the survey into a 
                 story.append(template)
             else:
                 pass
+#            print(" ")
 
         return " ".join(story)
 
@@ -296,9 +242,11 @@ class Template():
 
         stories = []
         for ix in ixs:
-            story = self.generate_story(ix)
-            if story != "":
-                stories.append(story)
+            ivstory = self.generate_story(ix, self.ivs)
+            dvstory = self.generate_story(ix, [self.dv])
+            if ivstory != "" and dvstory != "":
+                stories.append(ivstory+dvstory)
+
         return stories
 
 
@@ -308,44 +256,42 @@ class Template():
 
 if __name__=="__main__":
     df = read_in_df()
-    template = Template(df, 'gender 2012vote medianews primaryvote 2016vote'.split())
+#"gender",             
+#"2012vote",             
+#"medianews",             
+#"primaryvote",             
+#"2016vote",             
+#"ideology",             
+#"party",             
+#"churchgoer",             
+#"educationlevel",             
+#"race",             
+#"salary",             
+#"sexualorientation",             
+    varnames = 'gender 2012vote medianews primaryvote 2016vote'.split()
+
+
+
+
+    ivs = [
+        "gender",             
+        #"2012vote",             
+        "medianews",             
+        "primaryvote",             
+        "2016vote",             
+        "ideology",             
+        "party",             
+        "churchgoer",             
+        "educationlevel",             
+        "race",             
+        "salary",             
+        "sexualorientation",             
+    ]
+    dv = "2012vote"
+    
+    template = Template(df, ivs, dv)
     #ixs=np.arange(50)
     story = template.generate_stories( randomly=True, n=20)
-    for s in story:
-        print(s)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    print( story )
+    
 
