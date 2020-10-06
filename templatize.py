@@ -2,6 +2,11 @@ import pandas as pd
 import numpy as np
 import re
 import configparser
+import json
+
+def read_json(json_file='templates.json'):
+    jsonf = json.load(open(json_file,'r'))
+    return jsonf
 
 def read_in_df(txtfile='anes_timeseries_2016/anes_timeseries_2016_rawdata.txt'):
     df = pd.read_csv(txtfile, sep="|")
@@ -42,183 +47,93 @@ class Template():
     """
     def __init__(self, df, ivs, dv, tabsepfordv = True):
         self.df = df
-
+        self.dv = dv
+        self.ivs = ivs
         self.tabsepfordv = "\t" if tabsepfordv else ""
         code_labels = read_code_labels()
-        self.cldic = parse_code_labels(code_labels)
-        self.customcldic = {
-                "V161009":{"1": "a great deal of",
-                    "2": "a lot of",
-                    "3": "a moderate amount of",
-                    "4": "a little",
-                    "5": "no",
-                    },
-                "V161021":{"1": "voted",
-                    "2": "didn't vote",
-                    },
-                "V161342":{"1": "man",
-                    "2": "woman",
-                    },
-                "V161126":{"1": "extremely liberal",
-                    "2": "liberal",
-                    "3": "slightly liberal",
-                    "4": "moderate",
-                    "5": "slightly conservative",
-                    "6": "conservative",
-                    "7": "extremely conservative",
-                    },
-                "V161158x":{"1": "a strong Democrat",
-                    "2": "a moderate Democrat",
-                    "3": "an independent who leans left",
-                    "4": "an independent",
-                    "5": "an independent who leans right",
-                    "6": "a moderate Republican",
-                    "7": "a strong Republican",
-                    },
-                "V161244":{"1": "do",
-                    "2": "don't",
-                    },
-                "V161270":{"1": "I didn't graduate high school",
-                    "2": "I didn't graduate high school",
-                    "3": "I didn't graduate high school",
-                    "4": "I didn't graduate high school",
-                    "5": "I didn't graduate high school",
-                    "6": "I didn't graduate high school",
-                    "7": "I didn't graduate high school",
-                    "8": "I didn't graduate high school",
-                    "9": "I graduated from high school",
-                    "10": "I went to some college",
-                    "11": "I have an associate's degree",
-                    "12": "I have an associate's degree",
-                    "13": "I have a bachelor's degree",
-                    "14": "I have a master's degree",
-                    "15": "I have a professional degree",
-                    "16": "I have a doctorate",
-                    },
-                "V161310x":{"1": "white",
-                    "2": "black",
-                    "3": "asian",
-                    "4": "native american",
-                    "5": "hispanic",
-                    },
-                "V161361x":{"11": "low five figures",
-                    "13": "low five figures",
-                    "12": "low five figures",
-                    "14": "low five figures",
-                    "07": "low five figures",
-                    "09": "low five figures",
-                    "03": "low five figures",
-                    "21": "high five figures",
-                    "17": "high five figures",
-                    "15": "high five figures",
-                    "22": "high five figures",
-                    "19": "high five figures",
-                    "23": "six figures",
-                    "24": "six figures",
-                    "25": "six figures",
-                    "26": "six figures",
-                    "27": "six figures",
-                    "28": "six figures",
-                    },
-                "V161511":{"1": "straight",
-                    "2": "gay",
-                    "3": "bisexual",
-                    },
-                }
+        self.templates=read_json(json_file='templates.json')
+#    def check_if_valid(self, code, data):
+#        acceptable = {
+#                "V161342": np.arange(1,3),
+#                "V161006": np.arange(1,3),
+#                "V161009": np.arange(1,6),
+#                "V161021": np.arange(1,3),
+#                "V161027": np.arange(1,5),
+#                "V161126": np.arange(1,8),
+#                "V161158x": np.arange(1,8),
+#                "V161244": np.arange(1,3),
+#                "V161270": np.arange(1,17),
+#                "V161310x": np.arange(1,6),
+#                "V161361x": [1,21,11,17,15,23,24,13,22,12,25,14,26,27,7,\
+#                    9,28,19,3],
+#                "V161511": np.arange(1,4),
+#                }
+#        if data in acceptable[code]:
+#            return True
+#        else:
+#            return False
+#
+#
+#        pass
 
-        #Pass in as a list "ivs" those keys here which you want to 
-        #include in the story
-
-        namelabeldic = {
-                "gender": "V161342",
-                "2012vote": "V161006",
-                "medianews": "V161009",
-                "primaryvote": "V161021",
-                "2016vote": "V161027",
-                "ideology": "V161126",
-                "party": "V161158x",
-                "churchgoer": "V161244",
-                "educationlevel": "V161270",
-                "race": "V161310x",
-                "salary": "V161361x",
-                "sexualorientation": "V161511",
-                }
-
-
-        self.ivs=[]
-        for iv in ivs:
-            self.ivs.append(namelabeldic[iv])
-        self.dv = namelabeldic[dv]
-
-    def fill_template(self, code, data):
-        self.codetemplatedic = {
-                "V161342":f"I am a {data}.", #Gender
-                "V161006":f"In 2012, I voted for {self.tabsepfordv}{data}.", #Pres vote in 2012
-                "V161009":f"I watch {data} news.", #News consumption
-                "V161021":f"I {data} in the primary.", #Pres primary vote this year
-                "V161027":f"I voted for {data} in 2016.", #Pres primary vote this year
-                "V161126":f"I consider myself {data}.", #Ideology
-                "V161158x":f"I consider myself {data}.", #Party
-                "V161244":f"I {data} go to church.", #Church Attendance
-                "V161270":f"{data}.", #Educational attainment
-                "V161310x":f"I am {data}.", #Race
-                "V161361x":f"I make {data}.", #Salary
-                "V161511":f"I am {data}.", #Sexual Orientation
-                }
-        filled_template=self.codetemplatedic[code]
-        return filled_template
-
-
-
-    def check_if_valid(self, code, data):
-        acceptable = {
-                "V161342": np.arange(1,3),
-                "V161006": np.arange(1,3),
-                "V161009": np.arange(1,6),
-                "V161021": np.arange(1,3),
-                "V161027": np.arange(1,5),
-                "V161126": np.arange(1,8),
-                "V161158x": np.arange(1,8),
-                "V161244": np.arange(1,3),
-                "V161270": np.arange(1,17),
-                "V161310x": np.arange(1,6),
-                "V161361x": [1,21,11,17,15,23,24,13,22,12,25,14,26,27,7,\
-                    9,28,19,3],
-                "V161511": np.arange(1,4),
-                }
-        if data in acceptable[code]:
-            return True
-        else:
-            return False
-
-
-        pass
-
-    def generate_story(self, ix, codes):
+    def backstory(self, ix):
         """
         Generate story for respondent indexed by ix
         """
+        instance = self.df.iloc[ix]
         story = []
-        for code in codes:
-#            print(code)
-            data = self.df.iloc[ix][code] #This needs to get the data from the survey
-#            print(data)
-            acceptable = self.check_if_valid(code, data)
-#            print(acceptable)
-            if acceptable:
-                try:
-                    data = self.customcldic[code][str(data)]
-                except:
-                    replace_data = self.cldic[code][str(data)]
-                    data = re.search("(?<=\d\. ).*",replace_data).group(0)
-#                print(data)
-                template = self.fill_template(code,data)#This needs to insert the data from the survey into a 
-                story.append(template)
-            else:
+        for iv in self.ivs:
+            iv = self.templates['variables'][iv]
+            c = iv['c']
+            t = iv['ivt']
+            answer = instance[c]
+            try:
+                answer = iv['opts'][str(answer)]
+                t = t.replace('ANSWER', str(answer))
+                story.append(t)
+            except:
                 pass
-#            print(" ")
-
         return " ".join(story)
+
+
+
+
+
+
+
+#            acceptable = self.check_if_valid(code, data)
+#            if acceptable:
+#                try:
+#                    data = self.customcldic[code][str(data)]
+#                except:
+#                    replace_data = self.cldic[code][str(data)]
+#                    data = re.search("(?<=\d\. ).*",replace_data).group(0)
+##                print(data)
+#                template = self.fill_template(code,data)#This needs to insert the data from the survey into a 
+#                story.append(template)
+#            else:
+#                pass
+##            print(" ")
+#
+#        return " ".join(story)
+
+    def target(self, ix):
+        
+        instance = self.df.iloc[ix]
+        dv = self.templates['variables'][self.dv]
+        c = dv['c']
+        t = dv['dvt']
+        choices = dv['opts']
+        choicesstrlist = [f"({key}) {value}\n" for key, value in zip(choices.keys(), choices.values())]
+        choicesstr = "".join(choicesstrlist)
+        answer = instance[c]
+        t = t.replace('ANSWER', str(answer)).replace('CHOICES', choicesstr)
+        return t
+
+
+
+
+
 
 
     def generate_stories(self, ixs = None, randomly=False, n = None):
@@ -242,10 +157,14 @@ class Template():
 
         stories = []
         for ix in ixs:
-            ivstory = self.generate_story(ix, self.ivs)
-            dvstory = self.generate_story(ix, [self.dv])
+            ivstory = self.backstory(ix, self.ivs)
+            print( ivstory )
+            
+            dvstory = self.backstory(ix, [self.dv])
+            print( dvstory )
             if ivstory != "" and dvstory != "":
                 stories.append(ivstory+dvstory)
+                input()
 
         return stories
 
@@ -256,42 +175,24 @@ class Template():
 
 if __name__=="__main__":
     df = read_in_df()
-#"gender",             
-#"2012vote",             
-#"medianews",             
-#"primaryvote",             
-#"2016vote",             
-#"ideology",             
-#"party",             
-#"churchgoer",             
-#"educationlevel",             
-#"race",             
-#"salary",             
-#"sexualorientation",             
-    varnames = 'gender 2012vote medianews primaryvote 2016vote'.split()
-
-
-
-
     ivs = [
         "gender",             
-        #"2012vote",             
-        "medianews",             
-        "primaryvote",             
+        #"primaryvote",             
         "2016vote",             
         "ideology",             
         "party",             
-        "churchgoer",             
-        "educationlevel",             
+        "church",             
+        "education",             
         "race",             
-        "salary",             
-        "sexualorientation",             
+        "sexuality",             
     ]
     dv = "2012vote"
     
     template = Template(df, ivs, dv)
     #ixs=np.arange(50)
-    story = template.generate_stories( randomly=True, n=20)
-    print( story )
+    backstory = template.backstory(1) 
+    target = template.target(1) 
+    print( backstory, target )
+    
     
 
