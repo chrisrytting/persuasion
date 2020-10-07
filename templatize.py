@@ -3,6 +3,7 @@ import numpy as np
 import re
 import configparser
 import json
+import transformers
 
 def read_json(json_file='templates.json'):
     jsonf = json.load(open(json_file,'r'))
@@ -11,31 +12,6 @@ def read_json(json_file='templates.json'):
 def read_in_df(txtfile='anes_timeseries_2016/anes_timeseries_2016_rawdata.txt'):
     df = pd.read_csv(txtfile, sep="|")
     return df
-
-def read_code_labels(txtfile='codelabels.txt'):
-    f = open(txtfile,'r',encoding = 'Latin1')
-    return f.read()
-
-def parse_code_labels(code_labels):
-    """
-    Takes a list of code labels parsed by read_code_labels and
-    parses them so that the key of the dictionary this function returns
-    a dictionary with the integer codes as keys and the substitution
-    answers as values
-    """
-    cldic = {}
-    cls = code_labels.split('\n ;\n ')
-    for cl in cls:
-        try:
-            cl_split = cl.split('\t')
-            key = re.search('V\d+[^_\n]',cl_split[0]).group(0)
-            value_dic = {k:re.search('[^"].+?(?=")',v).group(0) for k,v in [kv.split(' = ') for kv in cl_split[1:]]}
-            cldic[key] = value_dic
-        except:
-            print(f"Didn't work in this case: {cl}")
-
-    return cldic
-
 
 class Template():
     """
@@ -49,32 +25,7 @@ class Template():
         self.df = df
         self.dv = dv
         self.ivs = ivs
-        self.tabsepfordv = "\t" if tabsepfordv else ""
-        code_labels = read_code_labels()
         self.templates=read_json(json_file='templates.json')
-#    def check_if_valid(self, code, data):
-#        acceptable = {
-#                "V161342": np.arange(1,3),
-#                "V161006": np.arange(1,3),
-#                "V161009": np.arange(1,6),
-#                "V161021": np.arange(1,3),
-#                "V161027": np.arange(1,5),
-#                "V161126": np.arange(1,8),
-#                "V161158x": np.arange(1,8),
-#                "V161244": np.arange(1,3),
-#                "V161270": np.arange(1,17),
-#                "V161310x": np.arange(1,6),
-#                "V161361x": [1,21,11,17,15,23,24,13,22,12,25,14,26,27,7,\
-#                    9,28,19,3],
-#                "V161511": np.arange(1,4),
-#                }
-#        if data in acceptable[code]:
-#            return True
-#        else:
-#            return False
-#
-#
-#        pass
 
     def backstory(self, ix):
         """
@@ -95,30 +46,9 @@ class Template():
                 pass
         return " ".join(story)
 
-
-
-
-
-
-
-#            acceptable = self.check_if_valid(code, data)
-#            if acceptable:
-#                try:
-#                    data = self.customcldic[code][str(data)]
-#                except:
-#                    replace_data = self.cldic[code][str(data)]
-#                    data = re.search("(?<=\d\. ).*",replace_data).group(0)
-##                print(data)
-#                template = self.fill_template(code,data)#This needs to insert the data from the survey into a 
-#                story.append(template)
-#            else:
-#                pass
-##            print(" ")
-#
-#        return " ".join(story)
-
-    def target(self, ix):
+    def target(self, ix, tsep = True):
         
+        sep = "\t" if tsep else ""
         instance = self.df.iloc[ix]
         dv = self.templates['variables'][self.dv]
         c = dv['c']
@@ -127,16 +57,10 @@ class Template():
         choicesstrlist = [f"({key}) {value}\n" for key, value in zip(choices.keys(), choices.values())]
         choicesstr = "".join(choicesstrlist)
         answer = instance[c]
-        t = t.replace('ANSWER', str(answer)).replace('CHOICES', choicesstr)
+        t = t.replace('ANSWER', sep + str(answer)).replace('CHOICES', choicesstr)
         return t
 
-
-
-
-
-
-
-    def generate_stories(self, ixs = None, randomly=False, n = None):
+    def genstories(self, ixs = None, randomly=False, n = None):
         """
         Iterate through ixs and generate stories for all the respondents
         """
@@ -157,16 +81,85 @@ class Template():
 
         stories = []
         for ix in ixs:
-            ivstory = self.backstory(ix, self.ivs)
-            print( ivstory )
-            
-            dvstory = self.backstory(ix, [self.dv])
-            print( dvstory )
-            if ivstory != "" and dvstory != "":
-                stories.append(ivstory+dvstory)
-                input()
-
+            story = self.backstory(ix) + self.target(ix)
+            stories.append(story.split('\t'))
         return stories
+
+    def predict(self, model, stories):
+        """
+        Given a model and a list of stories (each one is a list where the 
+        first entry is a backstory and the second entry is a target answer for
+        that story), predict the answer for the story given the model.
+        """
+
+
+
+
+class Sampler():
+
+    """
+    This class takes a df and samples according to provided criteria. 
+    There are also methods to calculate statistics for subdfs, like "What 
+    percentage of white men who believe that the bible is the word of God
+    voted for Donald Trump in 2016?"
+    """
+
+    def __init__(self, df):
+        """
+        Take a df you're interested in sampling from and calculating statistics
+        for.
+        """
+        self.df = df 
+
+    def narrow(self, keep):
+        """
+        Pass in a dict, keep, for vars you want to narrow on, for example:
+
+        ivs = {"2012vote": ['1', '2']}
+
+        Would narrow the df down to individuals who voted 1 or 2 in the 2012
+        presidential election (Mitt Romney or Barack Obama)
+        """
+        for key, value in keep.items():
+            self.df = self.df[self.df[key].isin(value)]
+        return df
+        
+def Stats():
+    """
+    Calculate stats about a dataframe, like of a dataframe, how many voted for 
+    Donald Trump.
+    """
+    def __init__(self, df):
+        self.df = df
+        self.templates=read_json(json_file='templates.json')
+
+    def proportion(self, var):
+        """
+        Calculate what proportion of each of the values of the random variable
+        var takes in the dataframe.
+        e.g. with the dataframe 
+
+          2012vote  gender
+        0   Barack    male
+        1     Mitt  female
+        2   Barack  female
+        3     evan    male
+
+        if we did self.proportion('2012vote') we would get 
+
+
+        Barack    50.0
+        evan      25.0
+        Mitt      25.0
+        Name: 2012vote, dtype: float64
+        """
+        var = self.templates('var')
+
+        props = df[var['c']].value_counts(normalize=True) * 100
+        return props
+
+
+
 
 
 
@@ -190,9 +183,6 @@ if __name__=="__main__":
     
     template = Template(df, ivs, dv)
     #ixs=np.arange(50)
-    backstory = template.backstory(1) 
-    target = template.target(1) 
-    print( backstory, target )
-    
-    
-
+    stories = template.genstories(ixs = [0, 15, 40])
+    for story in stories:
+        print( story )
