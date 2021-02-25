@@ -1,0 +1,168 @@
+{
+    "variables": {
+            "2012vote": {
+                "c": "V161006",
+                "dvt": "When I am asked who I voted for in the 2012 presidential election:\nCHOICES\nI respond with:ANSWER",
+                "ivt": "In 2012, I voted for ANSWER.",
+                "opts":{
+                    "1": "Barack Obama",
+                    "2": "Mitt Romney"
+                }
+            },
+            "2016vote": {
+                "c": "V161027",
+                "dvt": "When I am asked who I voted for in the 2016 presidential election:\nCHOICES\nI respond with:ANSWER",
+                "ivt": "In 2016, I voted for ANSWER.",
+                "opts":{
+                    "1" : "Hillary Clinton",
+                    "2" : "Donald Trump",
+                    "3" : "Gary Johnson",
+                    "4" : "Jill Stein"
+                }
+            },
+            "ideology": {
+                "c" : "V161126",
+                "ivt" : "I identify as ANSWER.",
+                "dvt" : "When I am asked how I identify politically:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "extremely liberal",
+                    "2" : "liberal",
+                    "3" : "slightly liberal",
+                    "4" : "moderate, middle of the road",
+                    "5" : "slightly conservative",
+                    "6" : "conservative",
+                    "7" : "extremely conservative"
+                    }
+            },
+            "party": {
+                "c" : "V161158x",
+                "ivt" : "I am ANSWER.",
+                "dvt" : "When I am asked whether I am:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+
+                    "1" : "a strong Democrat",
+                    "2" : "a not very strong Democract",
+                    "3" : "an independent-Democrat",
+                    "4" : "an independent",
+                    "5" : "an independent-Republican",
+                    "6" : "a not very strong Republican",
+                    "7" : "a strong Republican"
+                }
+            },
+            "church": {
+                "c":"V161245",
+                "ivt" : "ANSWER.",
+                "dvt" : "When I am asked whether:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "I attend church every week",
+                    "2" : "I attend church almost every week",
+                    "3" : "I attend church once or twice a month",
+                    "4" : "I attend church a few times a year",
+                    "5" : "I never attend church"
+                }
+            },
+            "education": {
+                "c" : "V161270",
+                "ivt" : "ANSWER.",
+                "dvt" : "When I am asked if:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "I have less than a 1st grade education",
+                    "2" : "I have a 4th grade education",
+                    "3" : "I have a 6th grade education",
+                    "4" : "I have an 8th grade education",
+                    "5" : "I have a 9th grade education",
+                    "6" : "I have a 10th grade education",
+                    "7" : "I have an 11th grade education",
+                    "8" : "I have a 12th grade education, but no diploma",
+                    "9" : "I am a high school graduate",
+                    "10" : "I have some college, but no degree",
+                    "11" : "I have an associate's degree in an occupational or vocational program",
+                    "12" : "I have an associate's degree in an academic program",
+                    "13" : "I have a Bachelor's degree",
+                    "14" : "I have a Master's degree",
+                    "15" : "I have a professional school degree",
+                    "16" : "I have a doctorate degree"
+                }
+            },
+            "union": {
+                "c" : "V161302",
+                "ivt" : "ANSWER.",
+                "dvt" : "When I am asked if:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "I am a member of a labor union",
+                    "2" : "I am not a member of a labor union"
+                }
+            },
+            "race": {
+                "c" : "V161310x",
+                "ivt" : "I am ANSWER.",
+                "dvt" : "When I am asked about my race:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "white",
+                    "2" : "black",
+                    "3" : "asian",
+                    "4" : "Native American",
+                    "5" : "hispanic"
+                }
+            },
+            "children": {
+                "c" : "V151324",
+                "ivt" : "I have ANSWER.",
+                "dvt" : "When I am asked how many children I have:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "0" : "no children",
+                    "1" : "one child",
+                    "2" : "two children",
+                    "3" : "three children",
+                    "4" : "four children",
+                    "5" : "five children",
+                    "6" : "six children",
+                    "7" : "seven children",
+                    "8" : "eight children",
+                    "9" : "more than eight children"
+                }
+            },
+            "gender": {
+                "c" : "V161342",
+                "ivt" : "I am ANSWER.",
+                "dvt" : "When I am asked my gender:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "male",
+                    "2" : "female"
+                }
+            },
+            "sexuality": {
+                "c" : "V161511",
+                "ivt" : "I am ANSWER.",
+                "dvt" : "When I am asked if I am:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "straight",
+                    "2" : "gay",
+                    "3" : "bisexual"
+                }
+            },
+            "maritalstatus": {
+                "c" : "V161268",
+                "ivt" : "I ANSWER.",
+                "dvt" : "When I am asked If I:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "am married",
+                    "2" : "am married, but my spouse is absent",
+                    "3" : "am widowed",
+                    "4" : "am divorced",
+                    "5" : "am separated",
+                    "6" : "have never been married"
+                }
+            },
+            "biblebelief": {
+                "c" : "V161243",
+                "ivt" : "ANSWER.",
+                "dvt" : "When I am asked whether:\nCHOICES\nI respond with:ANSWER",
+                "opts":{
+                    "1" : "I believe the Bible is the actual word of God and is to be taken literally, word for word",
+                    "2" : "I believe the Bible is the word of God but not everything in it should be taken literally",
+                    "3" : "I believe the Bible is a book written by men and is not the word of God"
+                }
+            }
+    }
+}
